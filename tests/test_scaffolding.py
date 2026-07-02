@@ -1,13 +1,4 @@
-"""Scaffolding smoke tests.
-
-These confirm the package is importable and its public API is wired up. The
-analytical functions are stubs at this stage and are expected to raise
-NotImplementedError; that expectation is asserted here so the tests turn green
-once the bodies are implemented and the raises removed.
-"""
-
-import numpy as np
-import pytest
+"""Smoke tests: package wiring and public API."""
 
 import sharpe_illusion
 from sharpe_illusion import drawdown, metrics, simulation
@@ -29,10 +20,3 @@ def test_public_callables_exist():
         drawdown.max_drawdown,
     ):
         assert callable(fn)
-
-
-def test_stubs_raise_until_implemented():
-    with pytest.raises(NotImplementedError):
-        simulation.simulate_returns(sr_true=0.5, n_periods=252)
-    with pytest.raises(NotImplementedError):
-        metrics.sharpe_ratio(np.zeros(10))

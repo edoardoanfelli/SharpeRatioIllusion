@@ -43,9 +43,13 @@ docs/                         # literature notes with citations
 tests/
 ```
 
-> Status: scaffolding + literature notes are in place. Analytical implementations
-> (`simulation.py`, `metrics.py`, `drawdown.py`) are stubbed with signatures and
-> references, to be filled in next.
+A publication-ready write-up (Substack article + LinkedIn post) with reproducible
+figures lives in [`docs/report/`](docs/report/); regenerate the figures with
+`python scripts/make_figures.py`.
+
+> Status: simulation, metrics (SR standard error, PSR, DSR, MinTRL) and the Monte
+> Carlo drawdown statistics are implemented and tested. The closed-form
+> `expected_max_drawdown` and the three analysis notebooks are the next phase.
 
 ## Development
 

@@ -8,9 +8,6 @@ PnL scatter around the theoretical value over finite horizons.
 This makes the "illusion" concrete:
 - with ``sr_true = 0`` some paths still exhibit a high realized SR (false positives);
 - with ``sr_true > 0`` some paths stay in drawdown for years (false negatives).
-
-All functions are stubs for now — signatures and references are fixed; the numerical
-bodies are implemented in the next phase.
 """
 
 from __future__ import annotations
@@ -32,8 +29,8 @@ def simulate_returns(
 ) -> np.ndarray:
     """Generate i.i.d. Gaussian return paths with a given *annualised* true SR.
 
-    The per-period mean is set so that ``mean / std * sqrt(periods_per_year)``
-    equals ``sr_true`` exactly at the population level.
+    The per-period mean is chosen so that
+    ``mean / vol * sqrt(periods_per_year) == sr_true`` at the population level.
 
     Parameters
     ----------
@@ -55,12 +52,21 @@ def simulate_returns(
     np.ndarray
         Array of shape ``(n_paths, n_periods)`` of per-period returns.
     """
-    raise NotImplementedError("Implemented in the next phase.")
+    if n_periods <= 0:
+        raise ValueError("n_periods must be positive")
+    if n_paths <= 0:
+        raise ValueError("n_paths must be positive")
+    if vol <= 0:
+        raise ValueError("vol must be positive")
+
+    rng = np.random.default_rng() if rng is None else rng
+    per_period_mean = sr_true * vol / np.sqrt(periods_per_year)
+    return rng.normal(loc=per_period_mean, scale=vol, size=(n_paths, n_periods))
 
 
 def cumulative_pnl(returns: np.ndarray) -> np.ndarray:
     """Cumulative (summed) PnL along the last axis of a returns array."""
-    raise NotImplementedError("Implemented in the next phase.")
+    return np.cumsum(np.asarray(returns, dtype=float), axis=-1)
 
 
 def realized_sharpe(
@@ -70,7 +76,15 @@ def realized_sharpe(
 ) -> np.ndarray:
     """Annualised realized (sample) Sharpe ratio per path.
 
-    Note: this is the *naive* estimator; see ``metrics`` for its standard error
-    and the bias/selection corrections.
+    Operates along the last axis, so a ``(n_paths, n_periods)`` array returns one
+    Sharpe ratio per path. Uses the sample standard deviation (``ddof=1``).
+
+    Note: this is the *naive* estimator; see :mod:`sharpe_illusion.metrics` for its
+    standard error and the bias / selection corrections.
     """
-    raise NotImplementedError("Implemented in the next phase.")
+    returns = np.asarray(returns, dtype=float)
+    mean = returns.mean(axis=-1)
+    std = returns.std(axis=-1, ddof=1)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        sr = np.where(std > 0, mean / std, np.nan)
+    return sr * np.sqrt(periods_per_year)
