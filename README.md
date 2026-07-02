@@ -47,9 +47,10 @@ A publication-ready write-up (Substack article + LinkedIn post) with reproducibl
 figures lives in [`docs/report/`](docs/report/); regenerate the figures with
 `python scripts/make_figures.py`.
 
-> Status: simulation, metrics (SR standard error, PSR, DSR, MinTRL) and the Monte
-> Carlo drawdown statistics are implemented and tested. The closed-form
-> `expected_max_drawdown` and the three analysis notebooks are the next phase.
+> Status: complete — simulation, metrics (SR standard error, PSR, DSR, MinTRL),
+> drawdown statistics including the closed-form `expected_max_drawdown`
+> (Magdon-Ismail et al. 2004, table calibrated in-repo by `scripts/calibrate_qp.py`),
+> and the three executed analysis notebooks.
 
 ## Development
 
