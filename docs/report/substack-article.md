@@ -1,6 +1,6 @@
 # The Sharpe Ratio Illusion
 
-### A coin-flip strategy can walk in with a Sharpe of 2. A genuinely great one can lose money for four years straight. It's the same fact, seen from two sides.
+### A coin-flip strategy can walk in with a Sharpe of 2. A genuinely great one can sit in a drawdown for seven years. It's the same fact, seen from two sides.
 
 ---
 
@@ -42,24 +42,38 @@ threshold that gets a manager hired. Plenty clear 2. Nothing is wrong with them;
 just got a good year. Point at any single strategy on the right-hand side of this chart
 and you cannot say whether it has an edge or a tailwind.
 
-## Illusion #2 — a great strategy that bleeds for years
+## Illusion #2 — a great strategy that stays in the hole for years
 
-Now the mirror image. Take a genuinely good strategy — true Sharpe 0.5, a number most
-funds would love — and simply watch its cumulative PnL.
+Now the mirror image, and this one has an exact theory behind it. Rej, Seager and
+Bouchaud at Capital Fund Management asked the question every manager in a losing streak
+is really asking — *"You are in a drawdown; when should you start worrying?"* — and
+answered it with the exact distributions for the **depth** and **duration** of a
+drawdown under a given Sharpe ratio.
 
-![Cumulative PnL of many true-SR-0.5 paths; the expected line rises steadily but individual paths spend years below zero](figures/fig2_drawdown.png)
+Model the PnL as a drifting random walk and normalize the volatility to 1, so the drift
+*is* the Sharpe ratio (`S = μ`). Two clean scaling laws fall out:
 
-The straight blue line is the edge doing its work in expectation. The individual paths
-are what a real investor actually experiences, and they are a mess. **18% of these
-genuinely-profitable strategies are still underwater three years in.** The highlighted
-path is a strategy with a *real, positive edge* that spends **nearly four years in the
-red** before it pays off. In the real world it gets redeemed at year two and the edge is
-never collected.
+- a typical drawdown's **depth** scales as **`1/S`**,
+- its **duration** scales as **`1/S²`**.
 
-This is the result Jean-Philippe Bouchaud and colleagues at Capital Fund Management made
-precise in *"You are in a drawdown — when should you start worrying?"*: for realistic
-Sharpe ratios, multi-year losing streaks are not a malfunction, they are the **expected
-behavior**. A long drawdown is not, by itself, evidence that anything broke.
+The duration is the brutal one: it goes as the *inverse square* of the Sharpe. Halve the
+Sharpe and you don't double the expected time in the hole — you **quadruple** it. This
+is the real reason drawdowns feel interminable, and it is why both managers and
+investors chronically underestimate them.
+
+![Left: survival curve of the current drawdown's duration for a true-SR-0.5 strategy over 10 years, with a 5% chance of lasting 7+ years. Right: median drawdown duration falling as 1/S-squared.](figures/fig2_drawdown.png)
+
+Put numbers on it. For a genuinely good strategy — true Sharpe 0.5 — watched over 10
+years, our simulation reproduces the paper's headline result exactly: **there is a 5%
+chance the drawdown you are currently sitting in has already lasted 7 years or more.**
+Seven years, with a real, positive edge, and nothing broken. In the real world that book
+is closed at year two and the edge is never collected.
+
+*(Two related but distinct objects are worth separating. Bouchaud studies the* current
+*drawdown — how long the hole you're in right now is likely to be. A different classic
+result, Magdon-Ismail et al. (2004), gives the expected* maximum *drawdown over a whole
+horizon; that one is also in the repo as a closed form. This piece uses the current-
+drawdown view because it matches the question a manager actually asks.)*
 
 ## Why both happen: the √T wall
 
@@ -72,6 +86,12 @@ The edge (`SR`) is fixed by the strategy. The only way to accumulate statistical
 confidence is to accumulate **time**, and it comes in as a *square root*. To double your
 certainty you need four times the data. The estimation error around a Sharpe ratio
 shrinks only as `1/√T`, which is agonizingly slow.
+
+The same tension explains Bouchaud's `1/S²`. The edge adds up in proportion to `S·T`,
+while the random swings grow only as `√T`. The edge doesn't reliably dominate the noise
+until `S·T ≳ √T`, i.e. until `T ≳ 1/S²` — which is exactly the timescale of a typical
+drawdown. Estimation error and drawdown duration are two faces of the same race between
+signal and noise.
 
 ## So how long *do* you need?
 

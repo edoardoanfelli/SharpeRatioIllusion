@@ -6,8 +6,8 @@
 
 ---
 
-A coin-flip strategy can post a Sharpe ratio of 2. A genuinely great strategy can lose
-money for four years straight.
+A coin-flip strategy can post a Sharpe ratio of 2. A genuinely great strategy can sit in
+a drawdown for seven years.
 
 It's the same fact, seen from two sides — and it's why the number the whole industry
 hires and fires on is quieter than it looks.
@@ -20,9 +20,9 @@ Three things fell out:
 → Over a single year, 1 in 6 strategies with **zero real edge** post a Sharpe above 1.0 —
 the "hire me" line. You cannot tell them from the real thing.
 
-→ A genuinely profitable strategy (true Sharpe 0.5) is still underwater 3 years in 18% of
-the time. Multi-year losing streaks aren't a malfunction; they're the *expected* behavior
-(as Bouchaud & CFM showed).
+→ A genuinely profitable strategy (true Sharpe 0.5) has a 5% chance its *current* drawdown
+has already lasted 7+ years. Rej, Seager & Bouchaud (CFM) derived why: drawdown duration
+scales as 1/S² — halve the Sharpe and you quadruple the expected time in the hole.
 
 → It's worse when you search. Trying 1,000 strategy variants with **zero edge** hands you
 a best-of-batch Sharpe above 2 — from pure noise. This is the backtest-overfitting trap

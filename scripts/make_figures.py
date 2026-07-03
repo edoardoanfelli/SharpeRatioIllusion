@@ -104,49 +104,69 @@ def fig1_illusion(rng):
     return frac_over_1
 
 
+def _current_drawdown_age_days(pnl):
+    """Age of the ongoing drawdown at the final step: T - last time at a new high."""
+    run_max = np.maximum.accumulate(pnl, axis=1)
+    at_high = pnl >= run_max - 1e-12
+    n = pnl.shape[1]
+    last_high = np.where(at_high, np.arange(n), -1).max(axis=1)
+    return (n - 1) - last_high
+
+
 def fig2_drawdown(rng):
-    """A genuinely profitable strategy can stay underwater for years."""
-    years = 10
-    horizon = PPY * years
-    n_paths = 4000
-    sr_true = 0.5
-    r = simulation.simulate_returns(sr_true, horizon, n_paths, rng=rng)
-    pnl = simulation.cumulative_pnl(r)
-    t = np.arange(1, horizon + 1) / PPY
+    """Bouchaud: how long and deep a drawdown is *normal* for a given Sharpe.
 
-    fig, ax = plt.subplots(figsize=(8, 4.6))
-    # background cloud of sample paths
-    for i in range(0, 120):
-        ax.plot(t, pnl[i], color=GRID, lw=0.6, zorder=1)
-    # theoretical drift
-    drift = sr_true / np.sqrt(PPY) * np.arange(1, horizon + 1)
-    ax.plot(t, drift, color=BLUE, lw=2.2, zorder=3, label="expected PnL")
-    # highlight a genuinely-positive path that stays negative for years
-    underwater_len = np.array(
-        [np.argmax(pnl[i] > 0) if np.any(pnl[i] > 0) else horizon for i in range(500)]
+    Left: survival curve of the current drawdown's duration (SR = 0.5, 10 years).
+    Right: the duration ~ 1/S^2 scaling law collapses onto a constant when scaled.
+    """
+    # --- left panel: duration distribution for SR = 0.5 over 10 years -------
+    horizon = PPY * 10
+    pnl = simulation.cumulative_pnl(
+        simulation.simulate_returns(0.5, horizon, 40_000, rng=rng)
     )
-    worst = int(np.argmax(underwater_len))
-    years_neg = underwater_len[worst] / PPY
-    ax.plot(t, pnl[worst], color=RED, lw=2.0, zorder=4)
-    ax.axhline(0, color=BASELINE, lw=1.0)
-    ax.text(0.985, 0.10, "expected PnL (true SR = 0.5)", transform=ax.transAxes,
-            color=BLUE, ha="right", fontsize=10, fontweight="bold")
-    ax.text(0.985, 0.03, f"one unlucky path: {years_neg:.1f} years in the red",
-            transform=ax.transAxes, color=RED, ha="right", fontsize=10,
-            fontweight="bold")
+    age_yr = _current_drawdown_age_days(pnl) / PPY
+    grid = np.linspace(0, 10, 200)
+    survival = np.array([(age_yr >= g).mean() for g in grid])
+    p7 = float((age_yr >= 7).mean())
 
-    frac_neg_3y = float(np.mean(pnl[:, PPY * 3 - 1] < 0))
-    _title(
-        ax,
-        "A profitable strategy can lose money for years",
-        f"Same true edge (SR = 0.5), 4000 paths · {frac_neg_3y:.0%} are still in the "
-        "red after 3 years",
+    fig, axes = plt.subplots(1, 2, figsize=(9.2, 4.4))
+    ax = axes[0]
+    ax.plot(grid, survival, color=BLUE, lw=2.4)
+    ax.plot([7], [p7], "o", color=RED, ms=7, zorder=5)
+    ax.annotate(f"{p7:.0%} chance the\ncurrent drawdown\nlasts ≥ 7 years",
+                (7, p7), textcoords="offset points", xytext=(-12, 34),
+                ha="right", color=RED, fontsize=9.5, fontweight="bold")
+    ax.set_xlabel("Drawdown duration (years)")
+    ax.set_ylabel("P(current drawdown ≥ x)")
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, 1)
+    _title(ax, "A working SR-0.5 strategy,\n10-year horizon", None)
+
+    # --- right panel: duration ~ 1/S^2 scaling ------------------------------
+    long_h = PPY * 40
+    s_grid = [0.5, 0.75, 1.0, 1.5, 2.0]
+    med_dur = []
+    for s in s_grid:
+        p = simulation.cumulative_pnl(
+            simulation.simulate_returns(s, long_h, 4000, rng=rng)
+        )
+        med_dur.append(np.median(_current_drawdown_age_days(p)) / PPY)
+    med_dur = np.array(med_dur)
+    ax = axes[1]
+    ax.plot(s_grid, med_dur, "o-", color=BLUE, lw=2.2, ms=6, label="simulated")
+    ref = med_dur[0] * (s_grid[0] ** 2) / np.array(s_grid) ** 2
+    ax.plot(s_grid, ref, color=RED, lw=1.6, ls="--", label="$\\propto 1/S^2$")
+    ax.set_xlabel("Sharpe ratio  S")
+    ax.set_ylabel("Median drawdown duration (years)")
+    ax.legend(frameon=False, fontsize=9.5)
+    _title(ax, "Duration falls as $1/S^2$", None)
+
+    fig.suptitle(
+        "How long a drawdown is normal, given the Sharpe ratio (Rej-Seager-Bouchaud)",
+        x=0.02, ha="left", fontsize=12.5, fontweight="bold", y=1.02,
     )
-    ax.set_xlabel("Years")
-    ax.set_ylabel("Cumulative PnL (in daily-vol units)")
-    ax.set_xlim(0, years)
     _save(fig, "fig2_drawdown.png")
-    return frac_neg_3y, years_neg
+    return p7, med_dur[0] * s_grid[0] ** 2
 
 
 def fig3_mintrl():
@@ -220,8 +240,8 @@ def main():
     f4 = fig4_overfitting(rng)
     print("\n--- headline numbers for the article ---")
     print(f"zero-edge paths above SR=1 in one year: {f1:.1%}")
-    print(f"good strategies still in the red after 3 years: {f2[0]:.1%}")
-    print(f"longest red streak in sample: {f2[1]:.1f} years")
+    print(f"P(current drawdown >= 7yr) at SR=0.5, 10yr: {f2[0]:.1%}")
+    print(f"duration x S^2 (approx constant): {f2[1]:.2f}")
     print(f"years to trust SR: {f3}")
     print(f"best-of-N zero-edge SR: {f4}")
 
